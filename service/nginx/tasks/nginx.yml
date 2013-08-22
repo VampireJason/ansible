@@ -1,0 +1,41 @@
+---
+
+- hosts: all
+  user: ncadmin
+  vars_files:
+    - /home/ansible/service/nginx/vars/nginx_config.yml
+  sudo: yes
+  tasks:
+  - name: ensure link script
+    action: template src=/home/ansible/common/files/lv_link.sh dest=/home/ncadmin owner=ncadmin group=ncadmin mode=0755
+  - name: create link for lvm
+    action: shell /home/ncadmin/lv_link.sh
+  - name: create lvm for nginx
+    action: lvol vg=domuvg lv=www size=${nginx_size} state=present
+  - name: ensure nginx root folder
+    action: file dest=/var/${nginx_root} owner=root group=root state=directory
+  - name: ensure make filesystem script
+    action: copy src=/home/ansible/service/nginx/files/nginxmkfs.sh dest=/home/ncadmin owner=ncadmin group=ncadmin mode=0755
+  - name: running the mkfs script
+    action: shell /home/ncadmin/nginxmkfs.sh
+  - name: ensure nginx is installed
+    action: yum name=nginx state=present
+  - name: ensure nginx configuration
+    action: template src=/home/ansible/service/nginx/templates/nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=root group=root mode=0644
+  - name: ensure nginx vhost configuration
+    action: template src=/home/ansible/service/nginx/templates/www.example.com.j2 dest=/etc/nginx/conf.d/${domain1}.conf owner=root group=root mode=0644
+  - name: ensure nginx monitoring configuration
+    action: copy src=/home/ansible/service/nginx/files/zabbix.conf dest=/etc/nginx/conf.d/ owner=root group=root mode=0644
+  - name: ensure vhost log folder and create log folder
+    action: file dest=/var/log/nginx/$item owner=root group=root state=directory
+    with_items:
+        - ${zabbix}
+        - ${domain1}
+  - name: ensure vhost data folder and create data folder
+    action: file dest=/var/www/sites/$item owner=root group=root state=directory
+    with_items:
+        - ${domain1}
+  - name: start nginx
+    service: name=nginx state=started
+  - name: chkconfig nginx on
+    action: command /sbin/chkconfig nginx on

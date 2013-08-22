@@ -1,0 +1,14 @@
+---
+
+
+-       name: install the domu via netinstll_scripts
+        hosts: srv-nc-xen10
+        user: ncadmin
+        sudo: yes
+        tasks:
+        - name: Ensure domu script
+          action: template src=/home/ansible/scripts/domu_nc_netinstall.sh dest=/home/ncadmin/domu_nc_netinstall.sh owner=ncadmin group=ncadmin mode=755
+        - name: Ensure srv-nc-ansibletest1 is installed
+          action: shell /home/ncadmin/domu_nc_netinstall.sh -r ${item.release} --name ${item.name} -I ${item.ip} -M ${item.mask} -G ${item.getway} --bridge ${item.bridge} --size ${item.size} --ram ${item.ram} --swap ${item.swap} -V ${item.cpu} -c ${item.cup} ${item.mode} 
+          with_items:
+                - {'release':'el6','name':'srv-nc-ansibletest1','ip':'10.2.1.41','mask':'255.255.255.0','getway':'10.2.1.1','bridge':'eth0','size':'20G','ram':'2048','swap':'2G','cpu':'2','cup':'200','mode':'-P'}

@@ -1,0 +1,10 @@
+---
+
+- hosts: all
+  user: ncadmin
+  sudo: yes
+  tasks:
+  - name: ensure repo installed
+    action: template src=$item dest=/etc/yum.repos.d/ owner=root group=root mode=0644
+    with_fileglob:
+        - /home/ansible/repo/el6/*

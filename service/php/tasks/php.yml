@@ -1,0 +1,30 @@
+---
+
+- hosts: all
+  user: ncadmin
+  vars_files:
+    - /home/ansible/service/php/vars/php_config.yml   
+  sudo: yes
+  tasks:
+  - name: ensure php and php-fpm installed
+    action: yum name=$item state=present
+    with_items:
+        - php-pdo
+        - php-mbstring
+        - php-cli
+        - php-pear
+        - php-common
+        - php-fpm
+        - php
+        - php-devel
+        - php-mysql
+        - php-gd
+        - php-mcrypt
+  - name: ensure php configuration
+    action: template src=/home/ansible/service/php/templates/php.ini.j2 dest=/etc/php.ini owner=root group=root mode=0644
+  - name: ensure php-fpm configuration
+    action: template src=/home/ansible/service/php/templates/www.conf.j2 dest=/etc/php-fpm.d/www.conf owner=root group=root mode=0644
+  - name: ensure php-fpm start
+    action: service name=php-fpm state=started
+  - name: chkconfig php-fpm on
+    action: command /sbin/chkconfig php-fpm on

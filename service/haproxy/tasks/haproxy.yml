@@ -1,0 +1,8 @@
+---
+
+- hosts: all
+  user: ncadmin
+  sudo: yes
+  tasks:
+  - name: ensure haproxy is installed
+    action: yum name=haproxy state=present

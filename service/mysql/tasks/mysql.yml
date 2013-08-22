@@ -1,0 +1,47 @@
+---
+
+- hosts: all
+  user: ncadmin
+  vars_files:
+    - /home/ansible/service/mysql/vars/mysql_config.yml
+  sudo: yes
+  tasks:
+  - name: ensure link script
+    action: template src=/home/ansible/common/files/lv_link.sh dest=/home/ncadmin owner=ncadmin group=ncadmin mode=0755
+  - name: create link for lvm
+    action: shell /home/ncadmin/lv_link.sh
+  - name: create lvm for mysql
+    action: lvol vg=domuvg lv=mysql size=${mysql_size} state=present
+  - name: ensure mysql folder
+    action: file dest=/var/lib/mysql owner=root group=root state=directory
+  - name: ensure make filesystem script
+    action: copy src=/home/ansible/service/mysql/files/mysqlmkfs.sh dest=/home/ncadmin owner=ncadmin group=ncadmin mode=0755
+  - name: ensure running the script
+    action: shell /home/ncadmin/mysqlmkfs.sh
+  - name: ensure percona installed
+    action: yum name=$item state=present
+    with_items:
+        - Percona-Server-server-55.x86_64
+        - Percona-Server-shared-55.x86_64
+        - Percona-Server-shared-compat.x86_64
+        - Percona-Server-client-55.x86_64
+  - name: change onwer for mysql folder
+    action: file dest=/var/lib/mysql owner=mysql group=mysql state=directory
+  - name: ensure percona configuration
+    action: template src=/home/ansible/service/mysql/templates/my.cnf.j2 dest=/etc/my.cnf owner=root group=root mode=0644
+  - name: remove older data
+    action: command rm -rf /var/lib/mysql/$item
+    with_items:
+        - mysql
+        - test
+        - lost+found
+        - performance_schema
+  - name: create mysql data folder
+    action: file dest=/var/lib/mysql/${mysql_data} owner=mysql group=mysql state=directory
+  - name: create new data
+    action: command mysql_install_db
+  - name: start mysql
+    service: name=mysql state=started
+  - name: chkconfig mysql on
+    action: command /sbin/chkconfig mysql on
+

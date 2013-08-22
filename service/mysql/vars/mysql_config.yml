@@ -1,0 +1,7 @@
+---
+# for mysql configuration
+
+mysql_size: 5120
+mysql_data: data
+innodb_buffer_pool_size: 24G
+

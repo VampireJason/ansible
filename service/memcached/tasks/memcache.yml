@@ -1,0 +1,12 @@
+---
+
+- hosts: all
+  user: ncadmin
+  sudo: yes
+  tasks:
+  - name: ensure memcached is installed
+    action: yum name=memcached state=present
+  - name: start memcached
+    service: name=memcached state=started
+  - name: chkconfig memcached on
+    action: command /sbin/chkconfig memcached on
